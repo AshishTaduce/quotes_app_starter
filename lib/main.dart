@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'dart:convert';
@@ -14,10 +16,11 @@ class QuotesPage extends StatefulWidget {
   @override
   _QuotesPageState createState() => _QuotesPageState();
 }
-
+bool isLoading = false;
 class _QuotesPageState extends State<QuotesPage> {
-  String quote = 'Fetching quote';
-  String author = "Mark";
+  String quote = 'Fetching Secrets to Greatness';
+  String author = "You're Awesome";
+
   Future <void> getQuotes() async {
     Map jsonMap;
     Response response = await get('https://favqs.com/api/qotd');
@@ -27,10 +30,13 @@ class _QuotesPageState extends State<QuotesPage> {
       setState(() {
         author = jsonMap['quote']['author'];
         quote = jsonMap['quote']['body'];
+        isLoading = false;
       });
     }
   }
+
   @override
+
   void initState() {
     // TODO: implement initState
     super.initState();
@@ -58,7 +64,16 @@ class _QuotesPageState extends State<QuotesPage> {
                     children: <Widget>[
                       Padding(
                         padding: const EdgeInsets.all(16),
-                        child: Text(
+                        child: isLoading
+                            ? Text(
+                          'Loading Secrets for Success.',style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.w500
+                        ),
+                          textAlign: TextAlign.left,
+                        )
+
+                            : Text(
                           '$quote',style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.w500
@@ -68,11 +83,21 @@ class _QuotesPageState extends State<QuotesPage> {
                       ),
                       Padding(
                         padding: const EdgeInsets.all(16.0),
-                        child: Text(
-                          '$author',style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.red,
+                        child: isLoading
+                            ? Text(
+                          'You are Amazing!!',style: TextStyle(
+                            fontSize: 18,
                           fontStyle: FontStyle.italic,
+                          color: Colors.red,
+                        ),
+                          textAlign: TextAlign.left,
+                        )
+
+                            : Text(
+                          '$author',style: TextStyle(
+                            fontSize: 18,
+                            fontStyle: FontStyle.italic,
+                          color: Colors.red,
                         ),
                           textAlign: TextAlign.left,
                         ),
@@ -86,10 +111,26 @@ class _QuotesPageState extends State<QuotesPage> {
                     mainAxisAlignment: MainAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: <Widget>[
-                      FlatButton(
-                        shape: new RoundedRectangleBorder(borderRadius: new BorderRadius.circular(30.0)),
-                        child: Icon(Icons.arrow_forward, color: Colors.red,),
-                        onPressed: getQuotes,
+                      FloatingActionButton(
+                        backgroundColor: Colors.white,
+                        child: isLoading
+                            ? CircularProgressIndicator(
+                          strokeWidth: 3.0,
+                          backgroundColor: Colors.blue,
+                          valueColor: new AlwaysStoppedAnimation<Color>(Colors.red),
+                        )
+                            : Icon(
+                          Icons.arrow_forward,
+                          color: Colors.red,
+                          size: 21,
+                        ),
+                        onPressed:(){
+                          setState(() {
+                            isLoading = true;
+                            sleep(const Duration(seconds:1));
+                            getQuotes();
+                          });
+                        },
                       ),
                     ],
                   ),
