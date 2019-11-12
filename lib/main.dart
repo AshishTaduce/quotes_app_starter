@@ -1,11 +1,19 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'dart:convert';
+import 'package:random_color/random_color.dart';
 
-void main() {
+import 'package:shared_preferences/shared_preferences.dart';
+
+
+void main() async{
+  Brightness brightness;
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  brightness = (prefs.getBool("isDark") ?? false) ? Brightness.dark: Brightness.light;
   runApp(MaterialApp(
+    theme: ThemeData(
+      brightness: brightness
+    ),
     home: QuotesPage(),
   ));
 }
@@ -36,29 +44,56 @@ class _QuotesPageState extends State<QuotesPage> {
     }
   }
 
+
+
   @override
   void initState() {
-    // TODO: implement initState
-    super.initState();
     getQuotes();
+    super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
+    var brightness = MediaQuery.of(context).platformBrightness;
+    Color fontColor =
+        brightness == Brightness.light ? Colors.white : Colors.white;
+    RandomColor _randomColor = RandomColor();
     var screenSize = MediaQuery.of(context).size.width;
     return Scaffold(
         body: Center(
       child: Container(
-        color: Colors.white,
+        decoration: BoxDecoration(
+          // Box decoration takes a gradient
+            gradient: brightness == Brightness.light
+                ? LinearGradient(
+                begin: Alignment.topRight,
+                end: Alignment.bottomLeft,
+                stops: [
+                  0.1,
+                  0.4,
+                  0.6,
+                  0.9
+                ],
+                colors: [
+                  Colors.yellow,
+                  Colors.red,
+                  Colors.indigo,
+                  Colors.teal
+                ])
+                : LinearGradient(
+        begin: Alignment.topRight,
+        end: Alignment.bottomLeft,
+        colors: [Colors.indigo, Colors.black87])
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.start,
           children: <Widget>[
             SizedBox(
-              height: screenSize * 0.5,
+              height: screenSize * 0.4,
             ),
             Container(
-              height: screenSize * 0.6,
+              height: screenSize * 0.7,
               width: double.infinity,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.end,
@@ -66,30 +101,34 @@ class _QuotesPageState extends State<QuotesPage> {
                 children: <Widget>[
                   Padding(
                     padding:
-                        const EdgeInsets.symmetric(vertical: 32, horizontal: 8),
+                        const EdgeInsets.symmetric(vertical: 24, horizontal: 32),
                     child: isLoading
                         ? Text(
                             'Loading Secrets for Success.',
                             style: TextStyle(
-                                fontSize: 24, fontWeight: FontWeight.w500),
+                                fontSize: 24,
+                                fontWeight: FontWeight.w500,
+                                color: fontColor),
                             textAlign: TextAlign.left,
                           )
                         : Text(
                             '$quote',
                             style: TextStyle(
-                                fontSize: 24, fontWeight: FontWeight.w500),
+                                fontSize: 24,
+                                fontWeight: FontWeight.w500,
+                                color: fontColor),
                             textAlign: TextAlign.left,
                           ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.all(4.0),
+                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 32),
                     child: isLoading
                         ? Text(
                             'You are Amazing!!',
                             style: TextStyle(
                               fontSize: 18,
                               fontStyle: FontStyle.italic,
-                              color: Colors.red,
+                              color: fontColor,
                             ),
                             textAlign: TextAlign.left,
                           )
@@ -98,8 +137,9 @@ class _QuotesPageState extends State<QuotesPage> {
                             style: TextStyle(
                               fontSize: 18,
                               fontStyle: FontStyle.italic,
-                              color: Colors.red,
+                              color: fontColor,
                             ),
+                            maxLines: 1,
                             textAlign: TextAlign.left,
                           ),
                   ),
@@ -107,33 +147,104 @@ class _QuotesPageState extends State<QuotesPage> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 8),
-              child: FloatingActionButton(
-                backgroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 32),
+              child: ActionGradientButton(
                 child: isLoading
                     ? CircularProgressIndicator(
                         strokeWidth: 3.0,
-                        backgroundColor: Colors.blue,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
+                        backgroundColor: Colors.white,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          brightness == Brightness.light
+                              ? _randomColor.randomColor(
+                              colorBrightness: ColorBrightness.light
+                          )
+                              : _randomColor.randomColor(
+                              colorBrightness: ColorBrightness.dark
+                          ),
+                        ),
                         value: null,
                       )
                     : Icon(
                         Icons.arrow_forward,
-                        color: Colors.red,
+                        color: Colors.white,
                         size: 21,
                       ),
+                gradient: brightness == Brightness.dark ? LinearGradient(
+                    begin: Alignment.topRight,
+                    end: Alignment.bottomLeft,
+                    stops: [
+                      0.45,
+                      0.90
+                    ],
+                    colors: [Colors.blueAccent, Colors.greenAccent])
+                      : LinearGradient(
+                  begin: Alignment.topRight,
+                  end: Alignment.bottomLeft,
+                  stops: [
+                    0.0,
+                    0.35,
+                    0.65
+                   ],
+                    colors: [
+                      Colors.yellow,
+                      Colors.orange,
+                      Colors.redAccent
+                    ]
+                ),
                 onPressed: () {
                   setState(() {
                     isLoading = true;
-                    //sleep(const Duration(seconds:1));
                     getQuotes();
                   });
                 },
               ),
-            )
+            ),
           ],
         ),
       ),
     ));
+  }
+}
+
+class ActionGradientButton extends StatelessWidget {
+  final Widget child;
+  final Gradient gradient;
+  final double width;
+  final double height;
+  final Function onPressed;
+
+  const ActionGradientButton({
+    Key key,
+    @required this.child,
+    this.gradient,
+    this.width = 60,
+    this.height = 60.0,
+    this.onPressed,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 60,
+      height: 60.0,
+      decoration: BoxDecoration(
+          gradient: gradient,
+          borderRadius: BorderRadius.all(Radius.circular(72)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.white.withAlpha(0),
+              offset: Offset(0.0, 1.5),
+              blurRadius: 1.5,
+            ),
+          ]),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+            onTap: onPressed,
+            child: Center(
+              child: child,
+            )),
+      ),
+    );
   }
 }
