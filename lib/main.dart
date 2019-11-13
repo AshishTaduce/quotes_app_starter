@@ -80,6 +80,7 @@ class _QuotesPageState extends State<QuotesPage> {
                   });
                 }
                 else{
+                  
                   setState(() {
                     brightness = Brightness.light;
                     darkMode = Colors.yellow;
